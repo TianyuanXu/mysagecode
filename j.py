@@ -16,7 +16,7 @@ def dihedral_product(u,w,M):
     
     INPUT:
     -"u", "w" -- lists representing reduced expressions of subregular dihedral
-                 elements. Both have to be of length at least 2.
+                 elements. Both can have length only 1.
 
     -"M"      -- the Coxeter matrix, from which m-values are extracted if
                  necessary. If m(s,t)=\infty, the corresponding entry is
@@ -86,6 +86,14 @@ def dihedral_product(u,w,M):
 
 def first_dihedral_segment(l):
     """ Return the dihedral segment at the beginning of the list l.
+    
+    INPUT:
+    - any nonempty list l, allowed to have length 1
+
+    OUTPUT:
+    - the first dihedral segment in l, so l itself when it has length 1. 
+      The output is never empty.
+
 
     EXAMPLES:
     
@@ -111,6 +119,13 @@ def first_dihedral_segment(l):
 def remove_first_dihedral_segment(l):
     """ Return the empty list if l is dihedral; otherwise chop off all but the
         last number of the first dihedral segment of l.
+
+    INPUT:
+    - any nonempty list l
+
+    OUTPUT:
+    - empty if l is itself dihedral; 
+      otherwise starts with the end of the first dihedral segment 
 
     Examples:
     
@@ -139,6 +154,12 @@ def remove_first_dihedral_segment(l):
 def dihedral_segments(l):
     """ Return the dihedral segments of l in a list.
 
+    INPUT:
+    - any nonempty list l
+
+    OUTPUT:
+    - a list of (nonempty) dihedral segments
+
     EXAMPLES:
     
     sage: dihedral_segments([1])
@@ -162,20 +183,48 @@ def left_mult_by_dihedral(u,w,M):
     """ Return the product t_u*t_w where u is dihedral.
 
     INPUT:
-    - "u" --
+    - "u" -- a dihedral list, allowed to be of length only 1
+    - "w" -- any nonempty list
+
+    OUTPUT:
+    - a list(sum) of lists(elements)
+
+    EXAMPLES:
+    
+    sage: M=[[1,4,7],[4,1,0],[7,0,1]]
+
+    sage: left_mult_by_dihedral([1,2,1],[1,3,1],M)
+    sage: [[1,2,1,3,1]]
+
+    sage: left_mult_by_diheral([1,2,1],[1,3,1,2,1],M)
+    sage: [[1,2,1,3,1,2,1]]
+
+    sage: left_mult_by_dihedral([1,3,1,3],[3,1,3,1,3,2,1],M)
+    sage: [[1,3,1,3,2,1],[1,3,2,1]]
 
     """
-    if u[-1]!=w[0]:
+    if u[-1] != w[0]:
         return 0
-    elif w==first_dihedral_segment(w):
+    elif w == first_dihedral_segment(w):    # this includes the case len(w)=1
         return dihedral_product(u,w,M)
     else: 
         head_of_w=first_dihedral_segment(w)
-        body_of_w=remove_first_dihedral_segment(w)
+        body_of_w=remove_first_dihedral_segment(w)  # guaranteed to be nonempty
         new_heads=dihedral_product(u,head_of_w,M)
         return [(x[:-1]+body_of_w) for x in new_heads]
 
 def t_mult(u,w,M):
+    """ Return t_u*t_w for any subregular u and w.
+    
+    .. ALGORITHM:
+    
+    Break u into its dihedral segments d1, d2, ..., dn.
+    Multiply each list(element) in [t_w] (list of list (t_w)) with t_dn 
+    on the left using left_mult_by_dihedral, getting a list of lists.
+    Repeat: multiply the resulting list of lists by t_d(n-1), ..., t_d1.
+
+    """
+
     if u[-1]!=w[0]:
         return 0
     else:
