@@ -216,6 +216,13 @@ def left_mult_by_dihedral(u,w,M):
 def t_mult(u,w,M):
     """ Return t_u*t_w for any subregular u and w.
     
+    INPUTS:
+    - "u", "w" -- any two lists
+    - "M"      -- the Coxeter matrix, providing the m-values when necessary
+
+    OUTPUT:
+    - a list of lists (t_u*t_w as a sum of subregular elements)
+
     .. ALGORITHM:
     
     Break u into its dihedral segments d1, d2, ..., dn.
