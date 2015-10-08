@@ -1,30 +1,49 @@
 def dihedral_string(s, t, l):
-    """Create the dihedral sting sts... of length l."""
+    """ Create the dihedral list sts... of length l. """
 
     if is_even(l):
-        return [s,t]*(l//2)
+        return [s,t] * (l//2)
     elif is_odd(l):
-        return [s,t]*(l//2)+[s]
+        return [s,t] * (l//2) + [s]
 
 def numbers_from(a,n,step=-2):
-    """
-    Return the list [a,a-2,a-4,...] of n numbers.
-    """
+    """ Return the list [a,a-2,a-4,...] of n numbers.  """
 
-    return [a + step *i for i in range(n)]
+    return [a + step * i for i in range(n)]
 
 def dihedral_product(u,w,M):
-    r""" 
-    Compute t_u*t_w in J for dihedral sequences u,w.
-
+    """ Compute t_u*t_w in J for dihedral sequences u,w.  
+    
     INPUT:
-    -"u", "w" -- lists representing reduced expressions of subregular elements
-                 The expressions must 'collide', meaning they need to involve
-                 the same two simple refelctions and u needs to end with what w
-                 starts with.
+    -"u", "w" -- lists representing reduced expressions of subregular dihedral
+                 elements. Both have to be of length at least 2.
 
-    -"m" -- the number m(s,t) where s,t are the simple reflections in u and w
+    -"M"      -- the Coxeter matrix, from which m-values are extracted if
+                 necessary. If m(s,t)=\infty, the corresponding entry is
+                 set to 0 instead.
 
+    OUTPUT:
+    - a list(representing the sum) of lists(representing elements). 
+      The elements always have the same head as u and same tail as w.
+
+    EXAMPLES:
+    sage: M=[[1,4,7],[4,1,0],[7,0,1]]
+    
+    sage: dihedral_product([1,2,1],[2,3],M)
+    sage: 0
+
+    sage: dihedral_product([1,2,1],[1],M)
+    sage: [[1,2,1]]
+
+    sage: dihedral_product([1,2,1],[1,3],M)
+    sage: [[1,2,1,3]]
+
+    sage: dihedral_product([2,3,2],[2,3,2,3,2],M)
+    sage: [[2,3,2],[2,3,2,3,2],[2,3,2,3,2,3,2]]
+
+    sage: dihedral_product([1,3,1,3],[3,1,3,1,3],M)
+    sage: [[1,3,1,3],[1,3]]
+    
     .. NOTE:
     The following is known: suppose u=st... and u,w collide, then
     \[ 
@@ -43,13 +62,19 @@ def dihedral_product(u,w,M):
                 S contains the m-(\max(k,l)) integers 2m-k-l-1, 2m-k-l-3, ...
                 of the same parity.
     """
-    if u[-1]!=w[0]:
+    if u[-1] != w[0]:
         return 0
-    elif u[-2]!=w[1]:
-        return [u[:-1]+w]
+    elif len(u) == 1:
+        return [w]
+    elif len(w) == 1:
+        return [u]
+    elif u[-2] != w[1]:
+        return [u[:-1] + w]
     else: 
         k=len(u)
         l=len(w)
+# Note the -1's below: we are assuming that the simple refelctions are labeled
+# starting from 1, instead of 0 like the rows/columns of M.
         m=M[u[0]-1][u[1]-1]
         if m==0:
             S=numbers_from(k+l-1,min(k,l))
@@ -60,6 +85,21 @@ def dihedral_product(u,w,M):
         return [dihedral_string(u[0],u[1],l) for l in S]
 
 def first_dihedral_segment(l):
+    """ Return the dihedral segment at the beginning of the list l.
+
+    EXAMPLES:
+    
+    sage: first_dihedral_segment([1,2,1,2,3,4])
+    sage: [1,2,1,2]
+
+    sage: first_dihedral_segment([1,2,1])
+    sage: [1,2,1]
+
+    sage: first_dihedral_segment([1])
+    sage: [1]
+
+    """
+    
     segment=[]
     for x in l:
         if x==l[0] or x==l[1]:
@@ -69,6 +109,22 @@ def first_dihedral_segment(l):
     return segment
 
 def remove_first_dihedral_segment(l):
+    """ Return the empty list if l is dihedral; otherwise chop off all but the
+        last number of the first dihedral segment of l.
+
+    Examples:
+    
+    sage: remove_first_dihedral_segment([1])
+    sage: []
+
+    sage: remove_first_dihedral_segment([1,2,1,2])
+    sage: []
+
+    sage: remove_first_dihedral_segment([1,2,1,3,4,2])
+    sage: [1,3,4,2]
+    
+    """
+    
     count = 0
     for x in l:
         if x==l[0] or x==l[1]:
@@ -81,14 +137,34 @@ def remove_first_dihedral_segment(l):
         return l[count - 1:]
 
 def dihedral_segments(l):
+    """ Return the dihedral segments of l in a list.
+
+    EXAMPLES:
+    
+    sage: dihedral_segments([1])
+    sage: [[1]]
+
+    sage: dihedral_segments([1,2,1,2])
+    sage: [[1,2,1,2]]
+
+    sage: dihedral_segments([1,2,1,3,2,3,4,3,4,1])
+    sage: [[1,2,1],[1,3],[3,2,3],[3,4,3,4],[4,1]]
+
+    """
     segment_list=[first_dihedral_segment(l)]
     remainder=remove_first_dihedral_segment(l)
-    while len(remainder)!=0:
+    while len(remainder) != 0:
         segment_list.append(first_dihedral_segment(remainder))
         remainder=remove_first_dihedral_segment(remainder)
     return segment_list
 
 def left_mult_by_dihedral(u,w,M):
+    """ Return the product t_u*t_w where u is dihedral.
+
+    INPUT:
+    - "u" --
+
+    """
     if u[-1]!=w[0]:
         return 0
     elif w==first_dihedral_segment(w):
