@@ -110,7 +110,7 @@ def stimesw(type,i,w):
     INPUT:
     - "type" -- the Cartan type of a Coxeter group W
     - "i" -- a number, representing the corresponding simple reflections s_i
-    - "w" -- a tuple, representing an element in the Coxeter group W
+    - "w" -- a list, representing an element in the Coxeter group W
     
     OUTPUT:
     - the product c_s*c_w of the Kazhdan Lusztig basis elements c_s and c_w
@@ -127,17 +127,72 @@ def stimesw(type,i,w):
     """
     
     W = CoxeterGroup(type, implementation = 'coxeter3')
-
-    d = defaultdict(int)
+    d = defaultdict()
+    
     if W(w).has_left_descent(i):
         d[tuple(w)] = v + v**(-1)
     else:
         d[(i,)+tuple(w)] = 1
         l = W.bruhat_interval([],w)
         for x in l:
-            if x.has_left_descent(i) and x.mu_coefficient(W(w))!=0:
+            if i in x.left_descents() and x.mu_coefficient(W(w))!=0:
                 d[tuple(x)] = x.mu_coefficient(W(w))
     return d
+
+def needs_breaking(t):
+    """ Determine if a product c_s * \cdots * c_{s'} (* c_w) needs breaking.
+
+    INPUT:
+    - t: a tuple, encoding the product of the KL-basis elements whose indices
+         are its entries.
+         Note that each element is implemented itself as a tuple.
+
+    OUTPUT: 
+    - a boolean value, describing if all the basis elements are already simple
+      relfections
+    """
+    return not len(t[-1]) == 1
+
+
+def break_once(type,w):
+    """
+    INPUT:
+    - 'w': an element of the Coxeter group, now implemented as a tuple.
+
+    OUTPUT:
+    - a dictionary whose keys are tuples(products) of tuples(KL-basis
+      elements), and whose values are the coefficients of the products in
+      the expression for c_w.
+      Note: all but one key in the resulting dictionary are just a plain
+      KL-basis elements, considered as a "product of one element". 
+    """
+
+    d=defaultdict()
+    s = w[0]
+    w1= w[1:]
+    
+    if len(w) == 1:
+        d[(w,)] = 1
+    else:
+        d = stimesw(type,s,list(w1))
+        del d[w]      
+        d = {(k,):-d[k] for k in d}
+        d[((s,),(w1))] = 1
+
+    return d
+
+
+def break_elt(type,w):
+    result = defaultdict()
+    d = break_once(type,w) 
+    l = [k for k in d]
+    for product in l:
+        if needs_breaking(product):
+            result[product] = 'break more'
+        else:
+            a = d.pop(product) 
+            result[product] += a
+    return result
 
 
 
