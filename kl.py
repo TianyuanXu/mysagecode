@@ -1,3 +1,7 @@
+import itertools
+from collections import defaultdict
+
+
 """
 Background:
     There are two sets of conventions for Hecke algebra.
@@ -74,11 +78,15 @@ def kl(type,y,w):
     """ Compute a Kazhdan-Lusztig polynomial.
 
     INPUT:
-    - "m" -- the Cartan type of a Coxeter group W
-    - "y", "w" --lists representing reduced expressions of elements in W
+    - "type" -- the Cartan type of a Coxeter group W
+    - "y", "w" --tuples representing reduced expressions of elements in W
    
     OUTPUT:
     - the Kazhdan-Lusztig polynomial p_{y,w}, returned in our convention. 
+
+
+    .. TODO::
+    - use Coxeter matrix instead of Cartan type to specify Coxeter groups.
     """
 
     W = CoxeterGroup(type,implementation='coxeter3')
@@ -96,13 +104,42 @@ def mu(type,y,w):
 
     return kl(type,y,w).coefficient(v,-1)
     
-def stimesw(type,s,w):
+def stimesw(type,i,w):
     """ Compute the product c_s * c_w where s is a simple reflection.
     
     INPUT:
     - "type" -- the Cartan type of a Coxeter group W
-    - "s" a simple reflections
-    - "w" any element in the Coxeter group W
+    - "i" -- a number, representing the corresponding simple reflections s_i
+    - "w" -- a tuple, representing an element in the Coxeter group W
+    
+    OUTPUT:
+    - the product c_s*c_w of the Kazhdan Lusztig basis elements c_s and c_w
+    
+    ALGORITHM:
+    - recall that if sw<w in the Bruhat order, then 
+        c_s * c_w = (v+v^(-1)) c_w;
+      otherwise, 
+        c_s * c_w = c_{sw} + \sum_{z:sz<z<w} \mu_{z,w} * c_z.
+    
+    .. TODO::
+    - be able to define an element of W from reduced words when W is
+      implemented using 'coxeter3'
+    """
+    
+    W = CoxeterGroup(type, implementation = 'coxeter3')
+
+    d = defaultdict(int)
+    if W(w).has_left_descent(i):
+        d[tuple(w)] = v + v**(-1)
+    else:
+        d[(i,)+tuple(w)] = 1
+        l = W.bruhat_interval([],w)
+        for x in l:
+            if x.has_left_descent(i) and x.mu_coefficient(W(w))!=0:
+                d[tuple(x)] = x.mu_coefficient(W(w))
+    return d
+
+
 
 def cbasis_into_tbasis(type,w):
     W3=CoxeterGroup(type,implementation='coxeter3')
