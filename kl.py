@@ -170,6 +170,7 @@ def ts_times_cw(type,s,w):
     Recall that T_s=c_s-v^(-1), so compute c_s*c_w-v^(-1)*c_w.
 
     """
+    W = CoxeterGroup(type, implementation = 'coxeter3')
     w_reduced = W(list(w)).reduced_word()
 
     d = defaultdict()
@@ -180,6 +181,40 @@ def ts_times_cw(type,s,w):
     else:       # must be the case that sw>w and c_sc_w doesn't contain c_w
         d[tuple(w_reduced)] = -v**(-1)
     return d
+
+
+def tproduct_times_cw(type,t,w):
+    """ Multiply a product of c_{s}'s with c_w.
+
+    INPUT:
+    - 'type' -- the Cartan type of the Coxeter group W
+    - 't' -- a tuple of simple reflections (s1,s2,...,sn)
+    - 'w' -- a tuple, representing an element of W
+
+    OUTPUT:
+    - the product (T_s1 * T_s2 * ... * T_sn) * c_w in the Hecke algebra of W.
+    
+    """
+
+    d = defaultdict()
+    d[w] = 1
+    for s in reversed(t): 
+        ts_times_d = defaultdict(int)
+        for w in d:
+            dd = ts_times_cw(type,s,w)
+            for term in dd:
+                ts_times_d[term] += dd[term] * d[w]
+        d = remove_zero(ts_times_d)  # see below for definition of remove_zero
+    return d
+
+
+def remove_zero(d):
+    dd = defaultdict(int)
+    for k in d:
+        if d[k] != 0:
+            dd[k] += d[k]
+    return dd
+
 
 def tw0_times_cw(type,w):
     """ Compute T_{w0}*c_w for a finite Coxeter group.
@@ -196,23 +231,12 @@ def tw0_times_cw(type,w):
     ALGORITHM:
     Recall that if (s1,...,sn) is a reduced expression for w0, then 
         T_{w0} = T_{s1} * \cdots * T_{sn},
-    so use ts_times_cw repeatedly.
-
+    so use ts_times_cw(type,t,w) with t given by any reduced word for w0.
     """
 
-    W = CoxeterGroup(type)
-    w0= W.long_element().reduced_word() # Todo: use 'coxeter3' with this; not working now
-
-    d = defaultdict()
-    d[w] = 1
-    for s in reversed(w0): # reversed not necessary since w0 is an involution
-        ts_times_d = defaultdict(int)
-        for w in d:
-            dd = ts_times_cw(type,s,w)
-            for term in dd:
-                ts_times_d[term] += dd[term] * d[w]
-        d = ts_times_d
-    return d
+    w0 = CoxeterGroup(type).w0.reduced_word()
+    return tproduct_times_cw(type,tuple(w0),w)
+   
 
 def sproduct_times_w(type,t,w):
     """ Multiply a product of c_{s}'s with c_w.
