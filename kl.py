@@ -104,16 +104,18 @@ def mu(type,y,w):
 
     return kl(type,y,w).coefficient(v,-1)
     
-def stimesw(type,i,w):
+def s_times_w(type,s,w):
     """ Compute the product c_s * c_w where s is a simple reflection.
     
     INPUT:
     - "type" -- the Cartan type of a Coxeter group W
-    - "i" -- a number, representing the corresponding simple reflections s_i
-    - "w" -- a list, representing an element in the Coxeter group W
+    - "s" -- a number, representing the corresponding simple reflections s_i
+    - "w" -- a tuple, representing an element in the Coxeter group W
     
     OUTPUT:
-    - the product c_s*c_w of the Kazhdan Lusztig basis elements c_s and c_w
+    - the product c_s*c_w of the Kazhdan Lusztig basis elements c_s and c_w,
+      implemented as a dictionary where the keys are tuples encoding the basis
+      elements, and the keys are the 
     
     ALGORITHM:
     - recall that if sw<w in the Bruhat order, then 
@@ -128,16 +130,42 @@ def stimesw(type,i,w):
     
     W = CoxeterGroup(type, implementation = 'coxeter3')
     d = defaultdict()
+
+    w = W(list(w)).reduced_word()
     
-    if W(w).has_left_descent(i):
+    if W(w).has_left_descent(s):
         d[tuple(w)] = v + v**(-1)
     else:
-        d[(i,)+tuple(w)] = 1
+        d[(s,)+tuple(w)] = 1
         l = W.bruhat_interval([],w)
         for x in l:
-            if i in x.left_descents() and x.mu_coefficient(W(w))!=0:
+            if s in x.left_descents() and x.mu_coefficient(W(w))!=0:
                 d[tuple(x)] = x.mu_coefficient(W(w))
     return d
+
+
+def sproduct_times_w(type,t,w):
+    d = defaultdict()
+    d[w] = 1
+    for s in reversed(t):
+        s_times_d = defaultdict(int)
+        for w in d:
+            dd = s_times_w(type,s,w)
+            for term in dd:
+                s_times_d[term] += dd[term] * d[w]
+        d = s_times_d
+    return d
+
+def sproducts_times_w(type,d,w):
+    result = defaultdict()
+    for k in d:
+        sproduct = tuple(itertools.chain.from_iterable(k))  # flatten d
+        dd = sproduct_times_w(type,sproduct,w)
+        for term in dd:
+            result[term] += dd[term] * d[k]
+    return result
+
+
 
 def needs_breaking(t):
     """ Determine if a product c_s * \cdots * c_{s'} (* c_w) needs breaking.
@@ -157,7 +185,7 @@ def needs_breaking(t):
 def break_once(type,w):
     """
     INPUT:
-    - 'w': an element of the Coxeter group, now implemented as a tuple.
+    - 'w': an element of the Coxeter group, implemented as a tuple.
 
     OUTPUT:
     - a dictionary whose keys are tuples(products) of tuples(KL-basis
@@ -174,10 +202,10 @@ def break_once(type,w):
     if len(w) == 1:
         d[(w,)] = 1
     else:
-        d = stimesw(type,s,list(w1))
+        d = s_times_w(type,s,w1)
         del d[w]      
         d = {(k,):-d[k] for k in d}
-        d[((s,),(w1))] = 1
+        d[((s,),w1)] = 1
 
     return d
 
