@@ -152,7 +152,7 @@ def s_times_w(type,s,w):
                 d[tuple(x)] = x.mu_coefficient(W(w_reduced))
     return d
 
-
+# Digression: computatzion of T_w0 * c_w.
 def ts_times_cw(type,s,w):
     """ Compute T_s*c_w in the Hecke algebra.
 
@@ -238,6 +238,7 @@ def tw0_times_cw(type,w):
     return tproduct_times_cw(type,tuple(w0),w)
    
 
+# computation of c_w * c_v. 
 def sproduct_times_w(type,t,w):
     """ Multiply a product of c_{s}'s with c_w.
 
@@ -268,27 +269,15 @@ def sproducts_times_w(type,d,w):
         sproduct = tuple(itertools.chain.from_iterable(k))  # flatten d
         dd = sproduct_times_w(type,sproduct,w)
         for term in dd:
-            result[term] += dd[term] * d[k]
-    return result
+            if term in result:
+                result[term] += dd[term] * d[k]
+            else:
+                result[term] = dd[term] * d[k]
+    return remove_zero(result)
 
 
 
-def needs_breaking(t):
-    """ Determine if a product c_s * \cdots * c_{s'} (* c_w) needs breaking.
-
-    INPUT:
-    - t: a tuple, encoding the product of the KL-basis elements whose indices
-         are its entries.
-         Note that each element is implemented itself as a tuple.
-
-    OUTPUT: 
-    - a boolean value, describing if all the basis elements are already simple
-      relfections
-    """
-    return not len(t[-1]) == 1
-
-
-def break_once(type,w):
+def break_elt_once(type,w):
     """
     INPUT:
     - 'w': an element of the Coxeter group, implemented as a tuple.
@@ -315,19 +304,65 @@ def break_once(type,w):
 
     return d
 
+def done(t):
+    """ Determine if a tuple represents a product of c_s's.
+
+    INPUT:
+    - t: a tuple of tuples, encoding the product of the KL-basis elements whose
+      indices are its entries(which are tuples themselves).
+
+    OUTPUT: 
+    - a boolean value, describing if all the basis elements in the product are 
+      already simple relfections
+    """
+    return len(t[-1]) == 1
+
+
+def break_product(type,t):
+    """ Break further a product c_s*...*c_w where w is not a simple reflection.
+    INPUT:
+    - 't': a tuple(product) of tuples(elements), of the form 
+           t = ((s1,),...,(sn,),(w)),
+           where w is not a simple reflection, so that t needs breaking.
+
+    """
+    result = defaultdict()
+    head = t[:-1]
+    d = break_elt_once(type,t[-1])
+    for tail in d:
+        result[head + tail] = d[tail]
+    return result
+
+
 
 def break_elt(type,w):
     result = defaultdict()
-    d = break_once(type,w) 
-    l = [k for k in d]
-    for product in l:
-        if needs_breaking(product):
-            result[product] = 'break more'
-        else:
-            a = d.pop(product) 
-            result[product] += a
+    to_be_checked = defaultdict()
+    to_be_checked[(w,)] = 1
+    while bool(to_be_checked): #equivalent to 'while to_be_checked is nonempty'
+        new_to_be_checked = defaultdict()
+        for t in to_be_checked:
+            if done(t):
+                if t in result:
+                    result[t] += to_be_checked[t]
+                else:
+                    result[t] = to_be_checked[t]
+            else:
+                dd = break_product(type,t)
+                for k in dd:
+                    if k in new_to_be_checked:
+                        new_to_be_checked[k] += dd[k] * to_be_checked[t]
+                    else:
+                        new_to_be_checked[k] = dd[k] * to_be_checked[t]
+        to_be_checked = new_to_be_checked
     return result
+                
+def v_times_w(type,v,w):
+    """ Compute c_v*c_w in the Hecke algebra.
+    """
 
+    d = break_elt(type,v)
+    return sproducts_times_w(type,d,w)
 
 
 def cbasis_into_tbasis(type,w):
