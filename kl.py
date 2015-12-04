@@ -71,15 +71,17 @@ W1=CoxeterGroup(m)
 var('v')
 # var('q')
 
+a4 = ['A',4]
 m = [[1,4,3,4],[4,1,3,2],[3,3,1,2],[4,2,2,1]] 
-W = CoxeterGroup(m,implementation='coxeter3')
+W1 = CoxeterGroup(m,implementation='coxeter3')
 
 def kl(type,y,w):
-    """ Compute a Kazhdan-Lusztig polynomial.
+    """ Compute a Kazhdan-Lusztig polynomial p_{y,w}.
 
     INPUT:
     - "type" -- the Cartan type of a Coxeter group W
-    - "y", "w" --tuples representing reduced expressions of elements in W
+    - "y", "w" --tuples, considered as expressions(not necessarily reduced) for
+                 elements in W
    
     OUTPUT:
     - the Kazhdan-Lusztig polynomial p_{y,w}, returned in our convention. 
@@ -88,63 +90,143 @@ def kl(type,y,w):
     .. TODO::
     - use Coxeter matrix instead of Cartan type to specify Coxeter groups.
     """
-
+   
     W = CoxeterGroup(type,implementation='coxeter3')
     f = W.kazhdan_lusztig_polynomial(y,w)
     g = f.substitute(q=v**2)*v**(len(y)-len(w))
     return g.expand()
 
 def mu(type,y,w):
-    """ Compute the mu-coefficient for a pair of elements y,w. 
+    """ Compute the mu_{y,w}, the mu-coefficient for a pair of elements y,w.
     
     .. TODO::
-        Use the coxeter3 package to directly compute mu_{y,w} instead of reading it
-        off as a coefficient of p_{y,w}.
+        Use the coxeter3 package to directly compute mu_{y,w} instead of 
+        reading it off as a coefficient of p_{y,w}.
+        The direct computation can be---and is---done in s_times_w, so this
+        function is actually not used.
     """
 
     return kl(type,y,w).coefficient(v,-1)
     
 def s_times_w(type,s,w):
-    """ Compute the product c_s * c_w where s is a simple reflection.
+    """ Compute the product c_s*c_w, where s is a simple reflection.
     
     INPUT:
     - "type" -- the Cartan type of a Coxeter group W
-    - "s" -- a number, representing the corresponding simple reflections s_i
-    - "w" -- a tuple, representing an element in the Coxeter group W
-    
+    - "s" -- a number i, representing the simple reflection s=s_i
+    - "w" -- a tuple, considered as an expression(not necessarily reduced) for
+             an element of W.    
+
     OUTPUT:
-    - the product c_s*c_w of the Kazhdan Lusztig basis elements c_s and c_w,
-      implemented as a dictionary where the keys are tuples encoding the basis
-      elements, and the keys are the 
+    - the product c_s*c_w of the Kazhdan Lusztig basis elements c_s and c_w in
+      the Hecke algebra of W, implemented as a dictionary, where the keys are
+      tuples encoding the basis elements, and the keys are their coefficients
+      in ZZ[v,v^(-1)].
     
     ALGORITHM:
-    - recall that if sw<w in the Bruhat order, then 
+    Recall that if sw<w in the Bruhat order, then 
         c_s * c_w = (v+v^(-1)) c_w;
-      otherwise, 
+    otherwise, 
         c_s * c_w = c_{sw} + \sum_{z:sz<z<w} \mu_{z,w} * c_z.
-    
-    .. TODO::
-    - be able to define an element of W from reduced words when W is
-      implemented using 'coxeter3'
+
+    .. NOTE: 
+        We are intentionally implementing expressions in W as tuples instead of
+        lists here, in accordance with the use of dictionaries to encode linear
+        combinations, for the keys in a dictionary can be tuples but not list.
+        Note, however, that the Sage functions such as W.bruhat_interval() all 
+        use expressions implemented as lists.
     """
     
     W = CoxeterGroup(type, implementation = 'coxeter3')
     d = defaultdict()
 
-    w = W(list(w)).reduced_word()
+    w_reduced = W(list(w)).reduced_word()   # a reduced word for w, as a list 
     
-    if W(w).has_left_descent(s):
-        d[tuple(w)] = v + v**(-1)
+    if W(w_reduced).has_left_descent(s): 
+        d[tuple(w_reduced)] = v + v**(-1)
     else:
-        d[(s,)+tuple(w)] = 1
-        l = W.bruhat_interval([],w)
+        d[(s,)+tuple(w_reduced)] = 1
+        l = W.bruhat_interval([],w_reduced)
         for x in l:
-            if s in x.left_descents() and x.mu_coefficient(W(w))!=0:
-                d[tuple(x)] = x.mu_coefficient(W(w))
+            if s in x.left_descents() and x.mu_coefficient(W(w_reduced))!=0:
+                d[tuple(x)] = x.mu_coefficient(W(w_reduced))
     return d
 
 
+def ts_times_cw(type,s,w):
+    """ Compute T_s*c_w in the Hecke algebra.
+
+    INPUT:
+    - "type" -- the Cartan type of a Coxeter group W
+    - "s" -- a number i, representing the simple reflection s=s_i
+    - "w" -- a tuple, considered as an expression(not necessarily reduced) for
+             an element of W.   
+
+    OUTPUT:
+    - the product T_s*c_w in the Hecke algebra of W, where T_s is the standard
+      basis element for s. 
+
+    ALGORITHM:
+    Recall that T_s=c_s-v^(-1), so compute c_s*c_w-v^(-1)*c_w.
+
+    """
+    w_reduced = W(list(w)).reduced_word()
+
+    d = defaultdict()
+    d = s_times_w(type,s,w)
+    
+    if tuple(w_reduced) in d:# Todo: avoid this; += should do but has KeyError
+        d[tuple(w_reduced)] += -v**(-1)
+    else:       # must be the case that sw>w and c_sc_w doesn't contain c_w
+        d[tuple(w_reduced)] = -v**(-1)
+    return d
+
+def tw0_times_cw(type,w):
+    """ Compute T_{w0}*c_w for a finite Coxeter group.
+
+    INPUT:
+    - "type" -- the Cartan type of a finite Coxeter group W 
+    - "w" -- a tuple, considered as an expression(not necessarily reduced) for 
+             an element of W
+
+    OUTPUT:
+    - the product T_{w0}*c_w in the Hecke algebra of W, where w0 is the longest
+      element of W
+
+    ALGORITHM:
+    Recall that if (s1,...,sn) is a reduced expression for w0, then 
+        T_{w0} = T_{s1} * \cdots * T_{sn},
+    so use ts_times_cw repeatedly.
+
+    """
+
+    W = CoxeterGroup(type)
+    w0= W.long_element().reduced_word() # Todo: use 'coxeter3' with this; not working now
+
+    d = defaultdict()
+    d[w] = 1
+    for s in reversed(w0): # reversed not necessary since w0 is an involution
+        ts_times_d = defaultdict(int)
+        for w in d:
+            dd = ts_times_cw(type,s,w)
+            for term in dd:
+                ts_times_d[term] += dd[term] * d[w]
+        d = ts_times_d
+    return d
+
 def sproduct_times_w(type,t,w):
+    """ Multiply a product of c_{s}'s with c_w.
+
+    INPUT:
+    - 'type' -- the Cartan type of the Coxeter group W
+    - 't' -- a tuple of simple reflections (s1,s2,...,sn)
+    - 'w' -- a tuple, representing an element of W
+
+    OUTPUT:
+    - the product (c_s1 * c_s2 * ... * c_sn) * c_w in the Hecke algebra of W.
+    
+    """
+
     d = defaultdict()
     d[w] = 1
     for s in reversed(t):
