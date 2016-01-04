@@ -75,6 +75,9 @@ a4 = ['A',4]
 m = [[1,4,3,4],[4,1,3,2],[3,3,1,2],[4,2,2,1]] 
 W1 = CoxeterGroup(m,implementation='coxeter3')
 
+def coxeter3(l,rank):
+    return CoxeterGroup([l,rank],implementation='coxeter3')
+
 def kl(type,y,w):
     """ Compute a Kazhdan-Lusztig polynomial p_{y,w}.
 
@@ -109,7 +112,7 @@ def mu(type,y,w):
     return kl(type,y,w).coefficient(v,-1)
     
 def s_times_w(type,s,w):
-    """ Compute the product c_s*c_w, where s is a simple reflection.
+    """ Compute the product c_s*c_w, ere s is a simple reflection.
     
     INPUT:
     - "type" -- the Cartan type of a Coxeter group W
@@ -145,8 +148,14 @@ def s_times_w(type,s,w):
     if W(w_reduced).has_left_descent(s): 
         d[tuple(w_reduced)] = v + v**(-1)
     else:
-        d[(s,)+tuple(w_reduced)] = 1
+        # Use the following three lines instead of d[(s,)+tuple(w_reduced)] = 1
+        # to ensure that all tuples come from the normal form of elements
+        t = (s,) + tuple(w_reduced)
+        sw = W(list(t)).reduced_word()
+        d[tuple(sw)] = 1 
         l = W.bruhat_interval([],w_reduced)
+        # BIG assumpution here: we are assuming that elements in l are already
+        # in normal forms (this appears to be true).
         for x in l:
             if s in x.left_descents() and x.mu_coefficient(W(w_reduced))!=0:
                 d[tuple(x)] = x.mu_coefficient(W(w_reduced))
@@ -164,7 +173,8 @@ def ts_times_cw(type,s,w):
 
     OUTPUT:
     - the product T_s*c_w in the Hecke algebra of W, where T_s is the standard
-      basis element for s. 
+      basis element for s. The output is a linear combination in the kl-basis,
+      and the indexing elements are already in normal forms.
 
     ALGORITHM:
     Recall that T_s=c_s-v^(-1), so compute c_s*c_w-v^(-1)*c_w.
@@ -180,8 +190,21 @@ def ts_times_cw(type,s,w):
         d[tuple(w_reduced)] += -v**(-1)
     else:       # must be the case that sw>w and c_sc_w doesn't contain c_w
         d[tuple(w_reduced)] = -v**(-1)
+
     return d
 
+def dihedral_ts_times_cw(rank,s,w):
+    d = defaultdict()
+    if len(w) == rank:
+        d[dihedral_string(1,2,rank)] = v
+    elif s == w[0]:
+        d[w] = v
+    else:
+        d[(s,)+w]=1
+        d[w]=-v**(-1)
+        if len(w) > 1: 
+            d[w[1:]]=1
+    return d
 
 def tproduct_times_cw(type,t,w):
     """ Multiply a product of c_{s}'s with c_w.
@@ -195,17 +218,33 @@ def tproduct_times_cw(type,t,w):
     - the product (T_s1 * T_s2 * ... * T_sn) * c_w in the Hecke algebra of W.
     
     """
-
+    W = CoxeterGroup(type, implementation='coxeter3')
     d = defaultdict()
+    w_reduced = W(list(w)).reduced_word()
+
+    d[tuple(w_reduced)] = 1
+    for s in reversed(t): 
+        ts_times_d = defaultdict(int)
+        for x in d:
+            dd = ts_times_cw(type,s,x)
+            for term in dd:
+                ts_times_d[term] += dd[term] * d[x]
+        d = remove_zero(ts_times_d)  # see below for definition of remove_zero
+    return d
+
+def dihedral_tproduct_times_cw(rank,t,w):
+    d = defaultdict()
+
     d[w] = 1
     for s in reversed(t): 
         ts_times_d = defaultdict(int)
-        for w in d:
-            dd = ts_times_cw(type,s,w)
+        for x in d:
+            dd = dihedral_ts_times_cw(rank,s,x)
             for term in dd:
-                ts_times_d[term] += dd[term] * d[w]
+                ts_times_d[term] += dd[term] * d[x]
         d = remove_zero(ts_times_d)  # see below for definition of remove_zero
     return d
+
 
 
 def remove_zero(d):
@@ -235,8 +274,94 @@ def tw0_times_cw(type,w):
     """
 
     w0 = CoxeterGroup(type).w0.reduced_word()
-    return tproduct_times_cw(type,tuple(w0),w)
-   
+    d = tproduct_times_cw(type,tuple(w0),w)
+    return compress_key(d)
+
+def dihedral_tw0_times_cw(rank,w):
+    w0=dihedral_string(1,2,rank)
+    d = dihedral_tproduct_times_cw(rank,w0,w)
+    return compress_key(d)
+
+
+def compress_tuple(t):
+    r"""
+    Compress a tuple of digits into a number, e.g., (2,3,1) --> 231
+    """
+    return int(''.join(map(str,t)))
+
+def compress_key(d):
+    r""" 
+    Compress the keys in a dictionary $d$, returning a new dictionary.
+    """
+    dd = defaultdict(int)
+    for k in d:
+        kk = compress_tuple(k)
+        dd[kk] = d[k]
+    return dd
+
+def inv(type,l,w):
+    d = tw0_times_cw(type,w)
+    for x in l:
+        if x in d:
+            return x 
+        else: 
+            continue
+
+def dihedral_inv(rank,l,w):
+    d = dihedral_tw0_times_cw(rank,w)
+    for x in l:
+        if x in d:
+            return x
+        else: 
+            continue
+
+
+def print_inv(type,d):
+    print 'The involution sigma behaves as follows in type {}:'.format(type)
+    print ''
+    i = 1
+    for k in d:
+        print 'Left cell #{}: {}'.format(i,d[k])
+        for elt in d[k]:
+            print '{} --> {}'.format(elt,inv(type,d[k],tuple(int(i) for i in str(elt))))
+        print ''
+        i = i+1
+
+def dihedral_print_inv(rank):
+    print 'The involution sigma behaves as follows in the dihedral group I_2({}):'.format(rank)
+    print ''
+    i = 1
+    d = dihedral_lcells(rank)
+    for k in d:
+        print 'Left cell #{}: {}'.format(i,d[k])
+        for elt in d[k]:
+            print '{} --> {}'.format(elt,dihedral_inv(rank,d[k],tuple(int(i)
+                for i in str(elt)))) 
+        print ''
+        i = i+1
+
+
+
+def convert_expression_BDFH(rank,w):
+    return compress_tuple((rank+1-int(i) for i in str(w)))
+
+def convert_lcells_BDFH(rank,d):
+    return {k:[convert_expression_BDFH(rank,w) for w in d[k]] for k in d}
+
+def dihedral_elt(end,l):
+    if is_even(l):
+        t = (3-end,end) * (l//2)
+    else: 
+        t = (end,) + (3-end,end) * (l//2)
+    return compress_tuple(t)
+
+def dihedral_lcells(rank):
+    d = defaultdict()
+    d[1] = [dihedral_elt(1,l) for l in xrange(1,rank)] 
+    d[2] = [dihedral_elt(2,l) for l in xrange(1,rank)]
+   # d[3] = [dihedral_elt(1,rank)]
+    return d
+
 
 # computation of c_w * c_v. 
 def sproduct_times_w(type,t,w):
