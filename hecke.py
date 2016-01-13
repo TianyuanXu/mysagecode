@@ -71,10 +71,6 @@ W1=CoxeterGroup(m)
 var('v')
 # var('q')
 
-a4 = ['A',4]
-m = [[1,4,3,4],[4,1,3,2],[3,3,1,2],[4,2,2,1]] 
-W1 = CoxeterGroup(m,implementation='coxeter3')
-
 def coxeter3(l,rank):
     return CoxeterGroup([l,rank],implementation='coxeter3')
 
