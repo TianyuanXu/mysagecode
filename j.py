@@ -505,4 +505,33 @@ def path(x,y):
     m = matrix(3,[1,x,2,x,1,y,2,y,1])
     return m
 
+x = (1,2,3,2,1)
+y = (1,2,3,2,3,2,1)
 
+def concat(l):
+    return reduce(lambda x,y: x[:-1]+y, l)
+
+def path_print(u,w,M):
+    d = t_basis_product(u,w,M)
+    print 't_{} * t_{} \nequals the sum of the following term(s):'.format(u,w)
+    for key in d:
+        print d[key], '*' , trans(key)
+
+
+def pathmult(k,l):
+    return path_print(concat(k),concat(l),path(4,6))
+
+def trans(t):
+    remain = t
+    l = []
+    while len(remain) != 1:
+        if remain[4] == 1:
+            l = l+["x"]
+            remain = remain[4:]
+        else: 
+            l = l+["y"]
+            remain = remain[6:]
+    return l
+
+
+        
