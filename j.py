@@ -501,3 +501,8 @@ def print_arbitrary_product(d1,d2,M):
         print d[key], '*', key
 
 
+def path(x,y):
+    m = matrix(3,[1,x,2,x,1,y,2,y,1])
+    return m
+
+
