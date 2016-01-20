@@ -21,6 +21,7 @@ def dihedral_string(s,t,l):
     elif is_odd(l):
         return (s,t) * (l//2) + (s,)
 
+
 def numbers_from(a,n,d=-2):
     r""" 
     Return the tuple $(a,a+d,a+2d,...,a+(n-1)d)$. 
@@ -142,6 +143,7 @@ def dihedral_product(u,w,M):
         for l in S:
             d[dihedral_string(u[0],u[1],l)] += 1
     return d
+
 
 def first_dihedral_segment(t):
     r""" 
@@ -341,7 +343,7 @@ def t_basis_product(u,w,M):
 
     """
     if u[-1] != w[0]:
-        return {}
+        return 0
     else:
         segments = dihedral_segments(u)
         n=len(segments)
@@ -400,8 +402,11 @@ def print_t_basis_product(u,w,M):
 
     d = t_basis_product(u,w,M)
     print 't_{} * t_{} \nequals the sum of the following term(s):'.format(u,w)
-    for key in d:
-        print d[key], '*' , key
+    if u[-1] != w[0]:
+        print 0
+    else: 
+        for key in d:
+            print d[key], '*' , key
 
 
 def arbitrary_product(d1,d2,M):
@@ -501,37 +506,103 @@ def print_arbitrary_product(d1,d2,M):
         print d[key], '*', key
 
 
-def path(x,y):
-    m = matrix(3,[1,x,2,x,1,y,2,y,1])
+###############################################################################
+
+"""
+The rest of the file is for the study of particular types of Coxeter groups
+"""
+
+###############################################################################
+
+# The path groups of rank 3
+
+def path(m1,m2):
+    r"""
+    Return the Coxeter matrix for the Coxeter group of rank 3 with $m(1,2)=m1,
+    m(2,3)=m2$, and $m(1,3)=2$.
+    """
+    m = matrix(3,[1,m1,2,m1,1,m2,2,m2,1])
     return m
 
-x = (1,2,3,2,1)
-y = (1,2,3,2,3,2,1)
+
+
+############################# path(4,6) #######################################
+
+ 
+
+# Here are the building blocks of subregular elements in $\Gamma_1\cap
+# \Gamma_1^{-1}$.
+x = (1,2,1)
+y = (1,2,3,2,1)
+z = (1,2,3,2,3,2,1)
 
 def concat(l):
+    r"""
+    Concatenate the strings in the list $l$, gluing 1s that meet.
+
+    INPUT: 
+
+    - "l"   -- a list of "x","y", and "z"s
+
+    OUTPUT:
+
+    - the concatenation of the tuples in l, where concatenation glues together
+      the 1s when they meet.
+
+    EXAMPLES:
+
+        sage: concat([x,y])
+        sage: (1,2,1,2,3,2,1)
+
+        sage: concat([y,z])
+        sage: (1,2,3,2,1,2,3,2,3,2,1)
+
+        sage: concat([y,z,y])
+        sage: (1,2,3,2,1,2,3,2,3,2,1,2,3,2,1)
+    """
     return reduce(lambda x,y: x[:-1]+y, l)
 
-def path_print(u,w,M):
+def decompose(t):
+    r"""
+    Invert concat, breaking a tuple into "x", "y" and "z"s.
+
+    Example:
+        
+        sage: decompose((1,2,3,2,1))
+        sage: ['x']
+
+        sage: decompose((1,2,3,2,3,2,1))
+        sage: ['y']
+
+        sage: decompose((1,2,3,2,1,2,3,2,3,2,1,2,3,2,1))
+        sage: ['x','y','x'] 
+    """
+    if len(t) == 1:
+        l = "1"
+    else: 
+        remain = t
+        l = ""
+        while len(remain) != 1:
+            if remain[2] == 1:
+                l = l+"x"
+                remain = remain[2:]
+            elif remain[4] == 1: 
+                l = l+"y"
+                remain = remain[4:]
+            elif remain[6] == 1:
+                l = l+"z"
+                remain = remain[6:]   
+    return l
+
+def pathmult(k,l,M):
+    r"""
+    Same as print_t_basis_product, but for path groups and using "x"s and
+    "y"s for the output.
+
+    """
+    u = concat(k)
+    w = concat(l)
     d = t_basis_product(u,w,M)
     print 't_{} * t_{} \nequals the sum of the following term(s):'.format(u,w)
     for key in d:
-        print d[key], '*' , trans(key)
-
-
-def pathmult(k,l):
-    return path_print(concat(k),concat(l),path(4,6))
-
-def trans(t):
-    remain = t
-    l = []
-    while len(remain) != 1:
-        if remain[4] == 1:
-            l = l+["x"]
-            remain = remain[4:]
-        else: 
-            l = l+["y"]
-            remain = remain[6:]
-    return l
-
-
-        
+        print d[key], '*' , decompose(key)
