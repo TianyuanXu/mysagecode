@@ -129,14 +129,18 @@ def s_times_w(type,s,w):
         c_s * c_w = c_{sw} + \sum_{z:sz<z<w} \mu_{z,w} * c_z.
 
     .. NOTE: 
-        We are intentionally implementing expressions in W as tuples instead of
-        lists here, in accordance with the use of dictionaries to encode linear
-        combinations, for the keys in a dictionary can be tuples but not list.
-        Note, however, that the Sage functions such as W.bruhat_interval() all 
-        use expressions implemented as lists.
+        - the elements returned in this function are in their canonical reduced form; in
+          particular, the expression sw may not be one of the keys in the
+          dictionary.
+
+        - We are intentionally implementing expressions in W as tuples instead
+          of lists here, in accordance with the use of dictionaries to encode
+          linear combinations, for the keys in a dictionary can be tuples but
+          not list.  Note, however, that the Sage functions such as
+          W.bruhat_interval() all use expressions implemented as lists.  
     """
     
-    W = CoxeterGroup(type, implementation = 'coxeter3')
+    W = CoxeterGroup(type, implementation = 'coxeter3') 
     d = defaultdict()
 
     w_reduced = W(list(w)).reduced_word()   # a reduced word for w, as a list 
@@ -219,10 +223,14 @@ def break_elt_once(type,w):
       KL-basis elements, considered as a "product of one element". 
     """
 
-    d=defaultdict()
+    d = defaultdict()
     s = w[0]
     w1= w[1:]
     
+    W = CoxeterGroup(type,implementation='coxeter3')
+    w = tuple(W(list(w)).reduced_word())
+
+
     if len(w) == 1:
         d[(w,)] = 1
     else:
@@ -293,12 +301,4 @@ def v_times_w(type,v,w):
     d = break_elt(type,v)
     return sproducts_times_w(type,d,w)
 
-
-def cbasis_into_tbasis(type,w):
-    W3=CoxeterGroup(type,implementation='coxeter3')
-    l=W3.bruhat_interval([],w)
-    H=IwahoriHeckeAlgebra(type,v,-v**(-1))
-    C=H.Cp();T=H.T()
-    return sum([kl(type,y,w)*T[y] for y in l])
-     
 
