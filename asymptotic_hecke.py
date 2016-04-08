@@ -514,95 +514,12 @@ The rest of the file is for the study of particular types of Coxeter groups
 
 ###############################################################################
 
-# The path groups of rank 3
+# Rank 3 Coxeter groups
 
-def path(m1,m2):
+def triangle(m12,m23,m13):
     r"""
-    Return the Coxeter matrix for the Coxeter group of rank 3 with $m(1,2)=m1,
-    m(2,3)=m2$, and $m(1,3)=2$.
+    Return the Coxeter matrix for the Coxeter group of rank 3 with $m(1,2)=m12,
+    m(2,3)=m23$, and $m(1,3)=m13$.
     """
-    m = matrix(3,[1,m1,2,m1,1,m2,2,m2,1])
+    m = matrix(3,[1,m12,m13,m12,1,m23,m13,m23,1])
     return m
-
-
-
-############################# path(4,6) #######################################
-
- 
-
-# Here are the building blocks of subregular elements in $\Gamma_1\cap
-# \Gamma_1^{-1}$.
-x = (1,2,1)
-y = (1,2,3,2,1)
-z = (1,2,3,2,3,2,1)
-
-def concat(l):
-    r"""
-    Concatenate the strings in the list $l$, gluing 1s that meet.
-
-    INPUT: 
-
-    - "l"   -- a list of "x","y", and "z"s
-
-    OUTPUT:
-
-    - the concatenation of the tuples in l, where concatenation glues together
-      the 1s when they meet.
-
-    EXAMPLES:
-
-        sage: concat([x,y])
-        sage: (1,2,1,2,3,2,1)
-
-        sage: concat([y,z])
-        sage: (1,2,3,2,1,2,3,2,3,2,1)
-
-        sage: concat([y,z,y])
-        sage: (1,2,3,2,1,2,3,2,3,2,1,2,3,2,1)
-    """
-    return reduce(lambda x,y: x[:-1]+y, l)
-
-def decompose(t):
-    r"""
-    Invert concat, breaking a tuple into "x", "y" and "z"s.
-
-    Example:
-        
-        sage: decompose((1,2,3,2,1))
-        sage: ['x']
-
-        sage: decompose((1,2,3,2,3,2,1))
-        sage: ['y']
-
-        sage: decompose((1,2,3,2,1,2,3,2,3,2,1,2,3,2,1))
-        sage: ['x','y','x'] 
-    """
-    if len(t) == 1:
-        l = "1"
-    else: 
-        remain = t
-        l = ""
-        while len(remain) != 1:
-            if remain[2] == 1:
-                l = l+"x"
-                remain = remain[2:]
-            elif remain[4] == 1: 
-                l = l+"y"
-                remain = remain[4:]
-            elif remain[6] == 1:
-                l = l+"z"
-                remain = remain[6:]   
-    return l
-
-def pathmult(k,l,M):
-    r"""
-    Same as print_t_basis_product, but for path groups and using "x"s and
-    "y"s for the output.
-
-    """
-    u = concat(k)
-    w = concat(l)
-    d = t_basis_product(u,w,M)
-    print 't_{} * t_{} \nequals the sum of the following term(s):'.format(u,w)
-    for key in d:
-        print d[key], '*' , decompose(key)
