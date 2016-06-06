@@ -1,5 +1,5 @@
 import itertools
-# from collections import OrderedDict 
+from collections import OrderedDict 
 from collections import defaultdict
 
 def dihedral_string(s,t,l):
@@ -151,7 +151,7 @@ def first_dihedral_segment(t):
     INPUT:
 
     - "t" -- any nonempty tuple , allowed to have length 1
-
+
     OUTPUT:
 
     - the longest dihedral string at the beginning of $t$, so $t$
@@ -358,8 +358,8 @@ def t_basis_product(u,w,M):
             d = new_d
             segments=segments[:-1]
             n=n-1
-        return d
-        # return OrderedDict(sorted(d.items()))
+        # return d
+        return OrderedDict(sorted(d.items()))
 
 def print_t_basis_product(u,w,M):
     r""" 
