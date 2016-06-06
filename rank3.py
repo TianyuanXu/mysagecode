@@ -1,6 +1,7 @@
 import pprint
 import itertools
-
+from collections import OrderedDict
+from collections import defaultdict
 
 def f(b):
     return 2 * b + 3
@@ -31,6 +32,7 @@ def table(rows,cols):
             line_i = [j.rjust(b) for j in i]
             f.write(''.join(line_i))
             f.write('\n')
+        f.write('')
 
 def sub_table(a,b):
     return table(sub_from_left(str(a)),sub_from_right(str(b)))

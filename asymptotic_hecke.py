@@ -1,5 +1,5 @@
 import itertools
-from collections import OrderedDict 
+# from collections import OrderedDict 
 from collections import defaultdict
 
 def dihedral_string(s,t,l):
@@ -358,7 +358,8 @@ def t_basis_product(u,w,M):
             d = new_d
             segments=segments[:-1]
             n=n-1
-        return collections.OrderedDict(sorted(d.items()))
+        return d
+        # return OrderedDict(sorted(d.items()))
 
 def print_t_basis_product(u,w,M):
     r""" 
@@ -513,12 +514,4 @@ The rest of the file is for the study of particular types of Coxeter groups
 
 ###############################################################################
 
-# Rank 3 Coxeter groups
 
-def triangle(m12,m23,m13):
-    r"""
-    Return the Coxeter matrix for the Coxeter group of rank 3 with $m(1,2)=m12,
-    m(2,3)=m23$, and $m(1,3)=m13$.
-    """
-    m = matrix(3,[1,m12,m13,m12,1,m23,m13,m23,1])
-    return m
