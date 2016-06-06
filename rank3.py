@@ -14,17 +14,26 @@ def all_less(n):
     l = [all_length(i) for i in range(1,n)]
     return reduce(lambda x,y: x+y, l)
 
-def table(rows,cols,b):
-    ll = [[str(i)]+[path_prod(i,j) for j in cols] for i in rows]
-    top_row = ['0'] + [str(i) for i in cols]
-    lll = [top_row] + ll
-    for i in lll:
-        i = [j.rjust(b) for j in i]
-        print(''.join(i))
+def sub_from_right(t):
+    return [int(t[:i]) for i in range(1,len(t)+1)]
 
-# for i in list_of_lists:
-    # i = [str(j).rjust(2n) for j in i]
-    # print(''.join(i))
+def sub_from_left(t):
+    return [int(t[-i:]) for i in range(1,len(t)+1)]
+
+def table(rows,cols):
+    with open('mysagecode/path46.txt','a+') as f:
+        f.write('\n')
+        ll = [[str(i)]+[path_prod(i,j) for j in cols] for i in rows]
+        top_row = [''] + [str(i) for i in cols]
+        lll = [top_row] + ll
+        b = max(map(len,flatten(lll))) + 2
+        for i in lll:
+            line_i = [j.rjust(b) for j in i]
+            f.write(''.join(line_i))
+            f.write('\n')
+
+def sub_table(a,b):
+    return table(sub_from_left(str(a)),sub_from_right(str(b)))
 
 def triangle(m12,m13,m23):
     m = matrix(3,[1,m12,m13,m12,1,m23,m13,m23,1])
