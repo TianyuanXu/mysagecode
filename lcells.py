@@ -77,7 +77,7 @@ A: In Theorem 3.1. of the paper "On the left cell representations of
 
     In the Sage program we wrote to study $\sigma$, we would construct Coxeter
     groups using a Sage(Python) implementation of Coxeter3(written mostly in
-    C++/C). For the finite Coxeter groups of type B, D, F and H, this somehow
+    C++/C). For the finite Coxeter groups of type B, D and H, this somehow
     causes a small problem: the labelling of the vertices in the Dynkin
     diagrams are different in Coxeter3 and in Sage. For example, for B3, the
     Dynkin diagram in Coxeter 3 looks like 
@@ -93,11 +93,11 @@ A: In Theorem 3.1. of the paper "On the left cell representations of
 
     i <-> (rank+1)-i
    
-    between the labels of the simple reflections. In type A and E, there is no
-    such issue. Everything in Sage coincides with those in Coxeter3. For
+    between the labels of the simple reflections. In type A, E and F, there is
+    no such issue. Everything in Sage coincides with those in Coxeter3. For
     clarity, we explicitely give the Coxeter matrix for each group.
     
-    # Canonical Expressions in Type BDFH
+    # Canonical Expressions in Type BDH
     
     The choice of canonical reduced expressions for elements do matter in our
     Sage program. Consider the following situation: 
