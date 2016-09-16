@@ -15,7 +15,7 @@ This folder contains
 
 5. data_on_sigma.py: data on the involution mentioned above for some finite Coxeter group;
 
-6. Kazhdan_Lusztig_cells: Kazhdan-Lusztig cell data on all finite Coxeter
+6. Kazhdan_Lusztig_cells: data on Kazhdan-Lusztig cells in all finite Coxeter
    groups of order less than or equal to 6.
 
 The code in 1-4 work for all Coxeter groups whose Cartan type is recognized in
