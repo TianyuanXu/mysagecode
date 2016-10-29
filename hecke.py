@@ -4,20 +4,40 @@ from collections import defaultdict
 r"""
 
 This file contains code for fast computation of products of Kazhdan-Lusztig
-basis elements in Hecke algebras.
+basis elements in Hecke algebras. The algorithm uses Fokko du Cloux's program
+Coxeter3(available as an optional Sage package) and we expect it to be faster
+than the algorithm currently implemented in Sage.
 
 -- Key Example
 
-We illustrate our algorithm using a very simple example. 
-(Please see the next section for more remarks on notations.)
-In the Hecke algebra of type ['A',4] (i.e., that of the symmetric group 'S_5'), 
-we have
+We illustrate our algorithm using a simple example. In the Hecke algebra of
+type ['A',2], we have
 
 \[
 c_{121}c_{121} = (c_{1}c_{21} - c_1)c_{121} = (c_1c_2c_1 - c_1) c_121
 \]
 
-In this example, we expressed the left factor 'c_{121}' as a sum of products of
+That is, we may write the first factor as a linear combination of products of KL
+basis elements $c_s$, where the $s$' are simple reflections. To finish the
+computation we just need to repeatedly compute products of the form $c_sc_w$.
+The formula for this product is well-known: the interesting case is when
+$sw>w$, whence
+
+\[
+c_sc_w=c_{sw}+\sum_{y:sy<y<w}\mu(y,w)c_w
+\]
+
+The $\mu$-coefficients can be computed quickly using Coxeter3. Thus, our
+algorithm for computing a product $c_wc_v$ is:
+
+    1. write $t_w$ as a linear combination in the form mentioned earlier,
+    2. repeatedly compute products of the form $c_sc_w$.
+
+The first step is done by using the last equation inductively as well: for any
+$w$, say $w$ can be written as $sw'$ for some simple reflection $s$ and some
+word $w'$ with $l(w')=l(w)-1$, then we can use the equation to write $c_w$ as
+$c_sc_w'$ minus a linear combination of things shorter than $w'$. Repeating the
+process starting with $w'$ will give us our desired linear combination.
 
 
 
@@ -26,6 +46,8 @@ In this example, we expressed the left factor 'c_{121}' as a sum of products of
 We use the notations and conventions used by Lusztig in his book "Hecke
 algebras with unequal parameters".  
 
+- We use the normalization '(T_s-v)(T_s+v^{-1})=0' for the quadratic relation
+  in the definition of the Hecke algebra. 
 - Coxeter groups are given by types(e.g., ['A',4]) and usually denoted by 'W'.
 - Simple reflections are usually denoted by 's' or 't'.
 - Elements of Coxeter groups are denoted by lower letters like the 'w' or 'y'.
@@ -35,8 +57,6 @@ algebras with unequal parameters".
 - Standard basis elements of Hecke algebras are denoted by 'T_w'.
 - Kazhdan-Lusztig basis elements of Hecke algebras are denoted by 'c_w'.
 - 'kl' always stands for 'Kazhdan-Lusztig'.
-- We use the normalization '(T_s-v)(T_s+v^{-1})=0' for the quadratic relation
-  in the definition of the Hecke algebra. 
 - Kazhdan-Lusztig polynomials are denoted by 'p_{y,w}'.
 - We will use the following fact: 
      'c_s \times c_w = (v+v^{-1}) c_w' if 'sw<w';
@@ -145,6 +165,12 @@ def s_times_w(type,s,w):
 def remove_zero(d):
     """ 
     Remove keys with value 0 from a dict/remove terms with coeff. 0 from a sum.
+    
+
+    EXAMPLES:
+        
+        sage: remove_zero({(1,2): v+v**{-1}, (1,3): 0})
+        sage: {(1,2): v+v**{-1}}
     """
 
     dd = defaultdict(int)
