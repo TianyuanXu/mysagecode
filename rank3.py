@@ -21,10 +21,24 @@ def sub_from_right(t):
 def sub_from_left(t):
     return [int(t[-i:]) for i in range(1,len(t)+1)]
 
-def table(rows,cols):
+def table46(rows,cols):
     with open('mysagecode/path46.txt','a+') as f:
         f.write('\n')
-        ll = [[str(i)]+[path_prod(i,j) for j in cols] for i in rows]
+        ll = [[str(i)]+[path_prod(i,j,4,6) for j in cols] for i in rows]
+        top_row = [''] + [str(i) for i in cols]
+        lll = [top_row] + ll
+        b = max(map(len,flatten(lll))) + 2
+        for i in lll:
+            line_i = [j.rjust(b) for j in i]
+            f.write(''.join(line_i))
+            f.write('\n')
+        f.write('')
+
+
+def table47(rows,cols):
+    with open('mysagecode/path47.txt','a+') as f:
+        f.write('\n')
+        ll = [[str(i)]+[path_prod(i,j,4,7) for j in cols] for i in rows]
         top_row = [''] + [str(i) for i in cols]
         lll = [top_row] + ll
         b = max(map(len,flatten(lll))) + 2
@@ -47,12 +61,15 @@ def path(m12,m23):
 ### code for the Coxeter group with m12=4, m23=6, m13=2
 
 def code_to_word(s):
-    t = ((1,)+dihedral_string(2,3,int(l))+(1,) for l in tuple(str(s)))
-    word = reduce(lambda x,y: x+y[1:], t)
-    return word
+    if s==0:
+        return (1,)
+    else:
+        t = ((1,)+dihedral_string(2,3,int(l))+(1,) for l in tuple(str(s)))
+        word = reduce(lambda x,y: x+y[1:], t)
+        return word
 
-def path_prod(s,t):
-    word_dic = t_basis_product(code_to_word(s),code_to_word(t),path(4,6))
+def path_prod(s,t,m12,m23):
+    word_dic = t_basis_product(code_to_word(s),code_to_word(t),path(m12,m23))
     l = [str(word_to_code(key))+'*'+str(word_dic[key]) for key in word_dic]
     return '+'.join(l)
 
