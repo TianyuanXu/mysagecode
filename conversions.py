@@ -60,6 +60,13 @@ def convert_cell(n,cell):
         sage: [432, 42, 31]
     """
 
-    return [convert_exp(n,w) for w in cell]
+    return [convert_element(n,w) for w in cell]
 
+def cell_elements(W,cell):
+	return [W.from_reduced_word(word_to_list(w)) for w in cell]
+
+
+
+def cell_inverse_elements(W,cell):
+    return [W.from_reduced_word(word_to_list(w)[::-1]) for w in cell]
 
