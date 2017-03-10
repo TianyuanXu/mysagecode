@@ -16,3 +16,11 @@ def decompose(w,s,t):
     rep = coset_rep.reduced_word()
     return parabolic, rep
 
+def fc_cardinality(n):
+    return binomial(2*n+2,n+1)-2**(n+2)+n+3
+
+def subregular_cardinality(n):
+    return 2*n*n+1
+
+def fcnsb(n):
+    return fc_cardinality(n)-subregular_cardinality(n)
