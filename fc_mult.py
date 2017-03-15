@@ -193,6 +193,7 @@ def left_justify(y):
         sage: [(3),(2,1),(3,),(2,1),(5,)]
     """
 
+
     l = []
     remain = y
     while remain != tuple():
@@ -270,73 +271,115 @@ def canonical_factors(y):
 
 var('v')
 
-def s_times_w(s,w):
+def s_once(s,y):
+    """ 
+    Return the result of the first step in computing c_s * c_w.
+
+    INPUTS:
+    -- 's': any factor in Green's f-basis, so s\in S or s = A, B, C, D, E, F.
+    -- 'w': the reduced word of an f.c. element
+
+    OUTPUT:
+    -- a pair (left, d), where left is a list of things to be multiplied on the
+    left to the linear combination in d.
+
+    EXAMPLES:
+        sage: factor_times_w(1,(2,3))
+        sage: ([], {(1,2,3):1})
+
+        sage: factor_times_w(1,(5,4,1,2))
+        sage: ([], {(5,4,1,2): v+1/v}
+
+        sage: factor_times_w(3,(5,2,4,1,3,2))
+        sage: ([], {(3,5,2,4,1,3,2): 1})
+
+        sage: factor_times_w(6,(4,1,2,1,7,3,6))
+        sage: ([4,A], {(3,6,1): 1})
+    """
     d = defaultdict(int)
-    d[w] = 1
-    left = [s]
-    while left != []: 
-        s = left[-1]
-        left = left[:-1]
-        for y in list(d):
-            if my_index(s,y) == -1:             # if s does not appear in y
-                d[(s,)+y] += 1 * d[y]
-                del d[y]
-            elif neighbors_before(s,y) == []:   # this is equivalent to sy<y 
-                d[y] = (v + v**(-1)) * d[y]     
-            elif s > 2 and len(neighbors_before(s,y)) == 2: # so sy is f.c.
-                d[(s,)+y] += 1 * d[y]
-                del d[y]
-            elif s > 4 or ( s == 3 and y[first_neighbor(3,y)] == 4):
-                factors = canonical_factors(y)
-                neighbor = first_neighbor(s,factors)
-                left = left + factors[:neighbor] 
-                d[factor_to_tuple(factors[neighbor+1:])] += 1 * d[y]
-                del d[y]            
-            else:                               # s appears in y and sy>y
-                if s == 1: 
-                    first2 = y.index(2)      # locate the first 2 in y
-                    left = left + list(y[:first2])
-                    z = y[first2:]
-                    parabolic = onetwo_on_left(z)[0] # the 12-star move
-                    if parabolic == (2,):
-                        d[(1,)+z] += 1 * d[y]
-                    elif parabolic == (2,1,2,1):
-                        d[z[1:]] += 1 * d[y]
-                    else:
-                        d[(1,)+z] += 1 * d[y]
-                        d[z[1:]] += 1 * d[y]
-                    del d[y]
-                elif s == 2 and len(neighbors_before(s,y)) == 2: # so sy is f.c.
-                    d[(s,)+y] += 1 * d[y]
-                    del d[y]
-                elif s == 2 and y[first_neighbor(2,y)] == 1:
-                    first1 = y.index(1) 
-                    left = left + list(y[:first1])
-                    z = y[first1:]
-                    parabolic = onetwo_on_left(z)[0] # the 21-star move
-                    if parabolic == (1,):
-                        d[(2,)+z] += 1 * d[y]
-                    elif parabolic == (1,2,1,2):
-                        d[z[1:]] += 1 * d[y]
-                    else:
-                        d[(2,)+z] += 1 * d[y]
-                        d[z[1:]] += 1 * d[y]
-                    del d[y]
-                elif s == 2 and y[first_neighbor(2,y)] == 3: # the 23-star move
-                    first3 = y.index(3) 
-                    left = left + list(y[:first3])
-                    d[y[first3+1:]] += 1 * d[y]
-                    del d[y]
-                elif s == 3 and y[first_neighbor(3,y)] == 2:
-                    parabolic = onetwo_on_left(y)[0] 
-                    if parabolic == (1,2,1):   # the most subtle case
-                        del d[y]               # since c_s * c_y = 0
-                    else:
-                       first2 = y.index(2)
-                       left = left + list(y[:first2])
-                       d[y[first2+1:]] += 1 * d[y]
-                       del d[y]
-    return d
+    left = tuple()
+    if my_index(s,y) == -1:             # if s does not appear in y
+        d[(s,)+y] += 1 
+    elif neighbors_before(s,y) == []:   # this is equivalent to sy<y 
+        d[y] += (v + v**(-1))     
+    elif len(neighbors_before(s,y)) == 2: # so sy is f.c.
+        d[(s,)+y] += 1
+    elif s > 3 or (s == 3 and y[first_neighbor(3,y)] == 4):
+        factors = canonical_factors(y)
+        neighbor = first_neighbor(s,factors)
+        left = tuple(factors[:neighbor])
+        d[factor_to_tuple(factors[neighbor+1:])] += 1 
+    else:           # s appears in y, has only 1 neighbor before it, and sy>y
+        if s == 1: 
+            first2 = y.index(2)      # locate the first 2 in y
+            left = y[:first2]
+            z = y[first2:]
+            parabolic = onetwo_on_left(z)[0] # the 12-star move
+            if parabolic == (2,):
+                d[(1,)+z] += 1 
+            elif parabolic == (2,1,2,1):
+                d[z[1:]] += 1 
+            else:
+                d[(1,)+z] += 1 
+                d[z[1:]] += 1 
+        elif s == 2 and y[first_neighbor(2,y)] == 1:
+            first1 = y.index(1) 
+            left = y[:first1]
+            z = y[first1:]
+            parabolic = onetwo_on_left(z)[0] # the 21-star move
+            if parabolic == (1,):
+                d[(2,)+z] += 1 
+            elif parabolic == (1,2,1,2):
+                d[z[1:]] += 1 
+            else:
+                d[(2,)+z] += 1 
+                d[z[1:]] += 1 
+        elif s == 2 and y[first_neighbor(2,y)] == 3: # the 23-star move
+            first3 = y.index(3) 
+            left = y[:first3]
+            d[y[first3+1:]] += 1
+        elif s == 3 and y[first_neighbor(3,y)] == 2:
+            parabolic = onetwo_on_left(y)[0] 
+            if parabolic == (1,2,1):   # the most subtle case
+                pass             # since c_s * c_y = 0
+            else:
+                first2 = y.index(2)
+                left = y[:first2]
+                d[y[first2+1:]] += 1 
+    dd = factor_to_poly(left)
+    e = defaultdict(int)
+    for k in dd:
+        for j in d:
+            e[(k,j)] += dd[k] * d[j] 
+    return e
+
+def s_times_w(s,w):
+    todo = defaultdict(int)
+    todo[((s,),w)] = 1
+    done = defaultdict(int)
+    while todo != {}:
+        for pair in list(todo):
+            if pair[0] == tuple():
+                done[pair[1]] += todo[pair]
+                del todo[pair]
+            else:
+                monomial = pair[0]
+                w = pair[1]
+                c = todo[pair]
+                del todo[pair]
+                s = monomial[-1]
+                d = s_once(s,w)
+                for k in d:
+                    todo[(monomial[:-1]+k[0],k[1])] += d[k] * c
+    return clean_up(done)
+
+def clean_up(d):
+    dd = defaultdict(int)
+    for k in d:
+        if d[k] != 0:
+            dd[tuple(flatten(left_justify(k)))] += d[k]
+    return dd
+
 
 def factor_to_tuple(l):
     t = tuple()
@@ -355,4 +398,63 @@ def factor_to_tuple(l):
             t = t + (2,1,2,1)
         else: 
             t = t + (x,)
+    return t
 
+def factor_to_poly(l):
+    d = defaultdict(int)
+    d[tuple()] = 1
+    for i in l:
+        if i == A:
+            for w in list(d):
+                d[w+(1,2)] += d[w]
+                d[w] = -d[w]
+        elif i == B:
+            for w in list(d):
+                d[w+(1,2,1)] += d[w]
+                d[w+(1,)] += -d[w]
+                del d[w]
+        elif i == C:
+            for w in list(d):
+                d[w+(2,1,2)] += d[w]
+                d[w+(2,)] += -d[w]
+                del d[w]
+        elif i == D:
+            for w in list(d):
+                d[w+(1,2,1,2)] += d[w]
+                d[w+(1,2)] += -2*d[w]
+                del d[w]
+        elif i == E:
+            for w in list(d):
+                d[w+(2,1,2)] += d[w]
+                d[w+(2,)] += -2*d[w]
+                del d[w]
+        elif i == F:
+            for w in list(d):
+                d[w+(2,1,2,1)] += d[w]
+                d[w+(2,1)] += -2*d[w]
+                del d[w]
+        else:
+            for w in list(d):
+                d[w+(i,)] += d[w]
+                del d[w]
+    return d
+
+def descendents_of(w,n):
+    new_vertices = [w]
+    current_vertices = [w]
+    edges = defaultdict(list)
+    while new_vertices != []:
+        for w in new_vertices:
+            for s in range(1,n+1):
+                d = s_times_w(s,w)
+                for y in d:
+                    if y != w:
+                        edges[w] += [y]
+                        if y not in current_vertices:
+                            new_vertices = new_vertices + [y]
+                            current_vertices = current_vertices + [y]
+            new_vertices.remove(w)  
+    return edges
+
+def descendent_graph(w,n):
+    return DiGraph(descendents_of(w,n))
