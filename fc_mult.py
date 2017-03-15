@@ -3,6 +3,9 @@ from collections import defaultdict
 
 """ Tuple Operations """
 
+def convert_to_word(l):
+    return int(''.join(map(str,l)))
+
 def remove_first(t,y):
     """ Remove the first occurrence of t from a tuple y.
     
@@ -448,8 +451,9 @@ def descendents_of(w,n):
             for s in range(1,n+1):
                 d = s_times_w(s,w)
                 for y in d:
-                    if y != w:
-                        edges[w] += [y]
+                    y_word = convert_to_word(y)
+                    if y != w and (y_word not in edges[convert_to_word(w)]):
+                        edges[convert_to_word(w)] += [convert_to_word(y)]
                         if y not in current_vertices:
                             new_vertices = new_vertices + [y]
                             current_vertices = current_vertices + [y]
