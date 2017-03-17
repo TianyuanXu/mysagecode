@@ -63,16 +63,16 @@ def subregular_cardinality(n):
     """
     return 2*n*n+1
 
-def fcnsb(n):
+def fcnsr(n):
     """ 
     Return the number of elements that are fully-commutative but not
     subregular.
     
-        sage: subregular_cardinality(2)
+        sage: fcnsr(2)
         sage: 0
 
-        sage: subregular_cardinality(3)
-        sage: 0
+        sage: fcnsr(3)
+        sage: 25
     """
     return fc_cardinality(n)-subregular_cardinality(n)
 
@@ -105,6 +105,7 @@ def a(w):
     """
     l = heap(w).antichains()
     return max([len(x) for x in l])
+
 
 """ canonical word from heap """
 
@@ -393,19 +394,19 @@ var('E')
 var('F')
 
 
-def canonical_factors(y):
+def ffactors(y):
     """
     Return the factors of Green's f-basis vector for y from a right-justified
     word.
     
     EXAMPLE:
-        sage: canonical_factors([1,2,1,3,4,2,1,5])
+        sage: factors([1,2,1,3,4,2,1,5])
         sage: [A,3,4,5,B]
 
-        sage: canonical_factors((1,2,3,1,4,2,1,5))
+        sage: factors((1,2,3,1,4,2,1,5))
         sage: [A,3,4,5,B]
 
-        sage: canonical_factors((3,1,2,3,1,4,5,2))
+        sage: factors((3,1,2,3,1,4,5,2))
         sage: [3,A,3,4,5,1,2]
 
     """
@@ -561,7 +562,7 @@ def s_once(s,y):
     elif len(neighbors_before(s,y)) == 2: # so sy is f.c.
         d[(s,)+y] += 1
     elif s > 3 or (s == 3 and y[first_neighbor(3,y)] == 4):
-        factors = canonical_factors(y)
+        factors = ffactors(y)
         neighbor = first_neighbor(s,factors)
         left = tuple(factors[:neighbor])
         d[factor_to_tuple(factors[neighbor+1:])] += 1 
@@ -662,6 +663,36 @@ def clean_up(d):
             dd[canonical_word(list_or_tuple_to_word(k))] += d[k]
     return dd
 
+def inverse(w):
+    """
+    Return the reverse of a word w.
+    
+    EXAMPLE:
+        sage: inverse(123)
+        sage: 321
+    """
+    return list_or_tuple_to_word(reversed(word_to_tuple(w)))
+
+def w_times_s(w,s):
+    """
+    Return c_w * c_s as a linear combination of KL basis elements.
+
+    EXAMPLES: 
+        sage: w_times_s((3,2),1)
+        sage: {321:1}
+
+        sage: w_times_s((2,1,4,5),1)
+        sage: {2415: v+1/v}
+    """
+    y = w[::-1]
+    d = s_times_w(s,y)
+    dd = defaultdict(int)
+    for k in d:
+        dd[canonical_word(inverse(k))] += d[k]
+    return dd
+
+
+
 """ cells """
 
 def left_descendents(x,n):
@@ -711,6 +742,60 @@ def left_descendents(x,n):
         d[vert] = sorted(edges[vert])
     return OrderedDict(sorted(d.items(),key=lambda t: t[0]))
 
+def descendents(x,n):
+    """
+    Return all elements lower than w in the left or right KL order in H_n.
+
+    INPUT:
+    -- 'w': the reduced word of an f.c. elements
+    -- 'n': rank of the type-H Coxeter group
+
+    Output: 
+    -- A dictionary encoding a directed graph, whose vertices are the keys and
+    the value of each key v is a list containing the vertices with an
+    incoming edge coming from v.
+    
+    NOTE: 
+    The output graph is generated in the following way: start with w as
+    the first vertex and multiply each vertex v by all simple reflections. If a
+    new KL basis element appears in such a product, add the element to the
+    vertex set and draw an edge from v to it. Continue until new elements arise
+    this way. 
+    
+    EXAMPLE: 
+        sage: left_descendents(1,2)
+        sage: {1: [21], 21: [121,1], 2121: [121], 121: [2121, 21]} 
+    """
+    w = canonical_word(x)
+    new_vertices = [w]
+    current_vertices = [w]
+    edges = defaultdict(list)
+    while new_vertices != []:
+        for z in new_vertices:
+            for s in range(1,n+1):
+                d = s_times_w(s,word_to_tuple(z))
+                for y in d:
+                    if y != z and (y not in edges[z]):
+                        edges[z] += [y]
+                        # print s, y
+                        if y not in current_vertices:
+                            new_vertices = new_vertices + [y]
+                            current_vertices = current_vertices + [y]
+                dd = w_times_s(word_to_tuple(z),s)
+                for y in dd:
+                    if y != z and (y not in edges[z]):
+                        edges[z] += [y]
+                        # print s, y
+                        if y not in current_vertices:
+                            new_vertices = new_vertices + [y]
+                            current_vertices = current_vertices + [y]
+            new_vertices.remove(z)  
+    d = defaultdict(list)
+    for vert in edges:                # convert all tuples to words
+        d[vert] = sorted(edges[vert])
+    return OrderedDict(sorted(d.items(),key=lambda t: t[0]))
+
+
 def left_graph(w,n):
     """
     Return the directed graph encoded by left_descendents(w,n).
@@ -720,15 +805,31 @@ def left_graph(w,n):
     output graph containing w is exactly the left cell of w.
 
     EXAMPLE:
-        sage: left_graph((1,3),4)
+        sage: left_graph(13,4)
         sage: Digraph on 18 vertices
 
-        sage: left_graph((1,3),4)
-        sage: Digraph on 93 vertices
+        sage: left_graph(13,5)
+        sage: Digraph on 66 vertices
 
     """
     return DiGraph(left_descendents(w,n))
 
+def descendents_graph(w,n):
+    """
+    Return the directed graph encoded by descendents(w,n).
+
+    Note: 
+    If w has a-value 2, the vertices of the strongly connected component of the
+    output graph containing w is exactly the 2-sided cell of w.
+
+    EXAMPLE:
+        sage: descendents_graph(13,4)
+        sage: Digraph on 162 vertices
+
+        sage: descendents_graph(13,5)
+        sage: Digraph on 753 vertices
+    """
+    return DiGraph(descendents(w,n))
 
 
 def left_cell(w,n):
@@ -753,16 +854,36 @@ def left_cell(w,n):
     d = left_graph(y,n)
     return sorted(d.strongly_connected_component_containing_vertex(y))
 
+def cell(w,n): 
+    """
+    Return the 2-sided cell in H_n of the element w (assuming a(w) = 2).
+
+    EXAMPLE:
+        sage: left_cell(13,4)
+        sage: [13, 143, 213, 1213, 2143, 12143, 21213, 32143, 132143, 212143,
+        321213, 2132143, 3212143, 4321213, 12132143, 212132143, 3212132143,
+        43212132143]
+
+        sage: left_cell(13,5)
+        sage: [13, 143, 213, 1213, 1543, 2143, 12143, 21213, 21543, 32143,
+        121543, 132143, 212143, 321213, 321543, 532143, 2121543, 2132143,
+        3212143, 4321213, 4321543, 4532143, 12132143, 32121543, 53212143,
+        54321213, 212132143, 432121543, 453212143, 3212132143, 43212132143,
+        543212132143]
+    """
+    y = canonical_word(w)
+    d = descendents_graph(y,n)
+    return sorted(d.strongly_connected_component_containing_vertex(y))
 
 def right_cell(w,n):
     """
     Return the right cell in H_n of the element w (assuming a(w) = 2).  
     """
-    y = list_or_tuple_to_word(reversed(word_to_tuple(w)))
+    y = inverse(w)
     l = left_cell(y,n)
     ll = []
     for x in l:
-        yy = list_or_tuple_to_word(reversed(word_to_tuple(x)))
+        yy = inverse(x)
         tt = canonical_word(yy)
         ll = ll + [tt]
     return ll
@@ -778,15 +899,173 @@ def cell_intersection(w,n):
         sage:
     """
     A = Set(left_cell(w,n))
-    y = list_or_tuple_to_word(reversed(word_to_tuple(w)))
+    y = inverse(w)
     B = Set(right_cell(y,n)) 
     return A.intersection(B)
 
 """
-TODO: compute products c_x * c_y
       compute 2-sided cells
       compute cells of products of 2 commuting letters
 """
 
 
+""" products c_x * c_y, where x, y have a-value at most 2 """
 
+def monomial_times_y(t,y):
+    """
+    Compute the product of a monomial in c_s and c_y.
+    
+    INPUT:
+    -- 't': a tuple encoding a monomial in c_s
+    -- 'y': the reduced word of an element of a-value at most 2
+
+    EXAMPLE:
+        sage: monomial_times_y((1,2),3)
+        sage: {123: 1}
+
+        sage: monomial_times_y((1,2),31)
+        sage: {1213: 1, 13:1}
+    """
+    d = defaultdict(int)
+    d[y] = 1 
+    for s in reversed(t):
+        s_times_d = defaultdict(int)
+        for w in d:
+            dd = s_times_w(s,word_to_tuple(w))
+            for term in dd:
+                s_times_d[term] += dd[term] * d[w]
+        d = s_times_d
+    return d
+
+
+
+def x_times_y(x,y):
+    """
+    Compute c_x * c_y modulo linear combinations of elements c_z where a(z)>2.
+
+    INPUT:
+    -- 'x', 'y': reduced words of elements of a-value at most 2
+
+    EXAMPLE:
+        sage: x_times_y(121,1212)
+        sage: {12: v + 1/v}
+        
+        sage: x_times_y(132143,132143)
+        sage: {132413: (v+1/v)^2, 13: (v+1/v)^2}
+    """
+    poly = factor_to_poly(ffactors(word_to_tuple(x)))
+    d = defaultdict(int)
+    for m in poly:
+        dd = monomial_times_y(m,y)
+        for term in dd:
+            d[term] += poly[m] * dd[term]
+    for k in list(d):
+        if d[k] == 0:
+            del d[k]
+    return d
+
+
+
+""" computing distinguished involutions """
+
+def dist_inv(x,n):
+    """
+    Find the distinguished involution in the left cell of H_n that contains x.
+
+    EXAMPLE:
+        sage: dist_inv(13,4)
+        sage: {13}
+        
+        sage: dist_inv(1213,4)
+        sage: {13}
+
+        sage: dist_inv(13,5)
+        sage: {13}
+    """ 
+    S = Set(x_times_y(inverse(x),x).keys())
+    if len(S) > 1:
+        l = left_cell(x,n)
+        i = 0
+        while len(S) > 1:
+            SS = Set(x_times_y(inverse(l[i]),l[i]).keys())
+            S = S.intersection(SS)
+            i = i+1
+    return S
+
+
+
+""" products of 2 commuting letters """
+
+def a2_pairs(n):
+    """
+    Return all products ij (i<j) of 2 commuting letters i and j.
+
+    EXAMPLE:
+        sage: a2_pairs(5)
+        sage: [13,14,15,24,25,35]
+    """
+    d = []
+    for i in range(1,n+1):
+        d += [list_or_tuple_to_word((i,j)) for j in range(i+2,n+1)]
+    return d
+
+def a2_cells(n):
+    """
+    Return all 2-sided cells of a-value 2 and their partition into left cells
+    in H_n.
+
+
+    """
+    l = a2_pairs(n)
+    k = 0 
+    S = Set()
+    d = defaultdict(list)
+    Cells = []
+    Lcells = []
+    for i in l:
+        if i in S:
+            print ""
+            print i, "is in an existing cell."
+        else:
+            c = cell(i,n)
+            d[i] = c  
+            print i, "is in the following new cell:"
+            print ""
+            print c
+            print ""
+            lcells = left_cells_in(c,n)
+            print "The 2-sided cell breaks into the following " + str(len(lcells)) + " left cells:"
+            for lc in lcells:
+                print ""
+                print lc
+                Lcells = Lcells + [lc]
+            S = S.union(Set(c))
+            k = k + 1
+            Cells = Cells + [c]
+
+    print ""
+    print "The number of 2-sided cells of a-value 2 is " + str(k) + "."
+    print ""
+    print "Cell data:"
+    return Cells, Lcells
+
+def left_cells_in(c,n):
+    """
+    Return the list of left cells in a 2-sided cell C.
+
+    EXAMPLE:
+        sage: left_cells_in(cell(13,3),3)
+        sage: [[13, 213, 1213, 21213, 321213],
+ 			   [132, 2132, 12132, 212132, 3212132],
+ 			   [1321, 21321, 121321, 2121321, 32121321],
+ 			   [13212, 213212, 1213212, 21213212, 321213212],
+ 			   [132123, 2132123, 12132123, 212132123, 3212132123]]
+    """
+    remain = c
+    l = []
+    while remain != []:
+        w = remain[0]
+        lcell = left_cell(w,n)
+        remain = [i for i in remain if i not in lcell]
+        l = l + [lcell]
+    return l
