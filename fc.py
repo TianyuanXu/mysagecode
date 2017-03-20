@@ -888,6 +888,14 @@ def right_cell(w,n):
         ll = ll + [tt]
     return ll
 
+def cell_inverse(C):
+    """
+    Return the inverse of a left cell, with elements in canonical form.
+    """
+    return [canonical_word(inverse(w)) for w in C]
+
+    
+
 def cell_intersection(w,n):
     """
     Return the intersection of the left cell containing w and its inverse in
@@ -898,15 +906,9 @@ def cell_intersection(w,n):
         sage: cell_intersection(13,4)
         sage:
     """
-    A = Set(left_cell(w,n))
-    y = inverse(w)
-    B = Set(right_cell(y,n)) 
-    return A.intersection(B)
-
-"""
-      compute 2-sided cells
-      compute cells of products of 2 commuting letters
-"""
+    A = left_cell(w,n)
+    B = cell_inverse(A) 
+    return Set(A).intersection(Set(B))
 
 
 """ products c_x * c_y, where x, y have a-value at most 2 """
@@ -966,33 +968,6 @@ def x_times_y(x,y):
 
 
 
-""" computing distinguished involutions """
-
-def dist_inv(x,n):
-    """
-    Find the distinguished involution in the left cell of H_n that contains x.
-
-    EXAMPLE:
-        sage: dist_inv(13,4)
-        sage: {13}
-        
-        sage: dist_inv(1213,4)
-        sage: {13}
-
-        sage: dist_inv(13,5)
-        sage: {13}
-    """ 
-    S = Set(x_times_y(inverse(x),x).keys())
-    if len(S) > 1:
-        l = left_cell(x,n)
-        i = 0
-        while len(S) > 1:
-            SS = Set(x_times_y(inverse(l[i]),l[i]).keys())
-            S = S.intersection(SS)
-            i = i+1
-    return S
-
-
 
 """ products of 2 commuting letters """
 
@@ -1011,45 +986,37 @@ def a2_pairs(n):
 
 def a2_cells(n):
     """
-    Return all 2-sided cells of a-value 2 and their partition into left cells
-    in H_n.
+    Partition the 2-sided cell of a-value 2 in H_n into left cells.
 
-
+    NOTE:
+    The cardinality of the 2-sided cell with a-value 2 is 25, 162 = 2 * 9^2,
+    392 = 2 * 14^2, 800 = 2 * 20^2, 1458 = 2 * 27^2 for H3, H4, H5, H6, H7,
+    respectively.
     """
-    l = a2_pairs(n)
-    k = 0 
-    S = Set()
-    d = defaultdict(list)
-    Cells = []
-    Lcells = []
-    for i in l:
-        if i in S:
-            print ""
-            print i, "is in an existing cell."
-        else:
-            c = cell(i,n)
-            d[i] = c  
-            print i, "is in the following new cell:"
-            print ""
-            print c
-            print ""
-            lcells = left_cells_in(c,n)
-            print "The 2-sided cell breaks into the following " + str(len(lcells)) + " left cells:"
-            for lc in lcells:
-                print ""
-                print lc
-                Lcells = Lcells + [lc]
-            S = S.union(Set(c))
-            k = k + 1
-            Cells = Cells + [c]
+    C = cell(13,n)
+    l = len(C)
+    lcells = left_cells_in(C,n)
+    k = len(lcells)
+    intersections = [Set(c).intersection(Set(cell_inverse(c))) for c in lcells]
+    with open('mysagecode/a2cells.txt','a+') as f:
+        f.write("************** H" + str(n) + " *****************\n\n")
+        f.write("The 2-sided cell of a-value 2 in H" + str(n) + " has " +
+                str(l) + " elements.\n\n")
+        f.write("The cell consists of " + str(k) + " left cells. They are:\n\n"
+)
+        for i in range(k):
+            f.write("L" + str(i) + ":")
+            f.write("%s" % lcells[i])
+            f.write(".\n")
+            f.write("Its intersection with its inverse is ")
+            f.write("%s" % intersections[i])
+            f.write(".\n\n")
+            f.write("The distinguished involution in this left cell is ")
+            print dist_inv(list(intersections[i]))
+            f.write(".\n\n")
 
-    print ""
-    print "The number of 2-sided cells of a-value 2 is " + str(k) + "."
-    print ""
-    print "Cell data:"
-    return Cells, Lcells
 
-def left_cells_in(c,n):
+def left_cells_in(C,n):
     """
     Return the list of left cells in a 2-sided cell C.
 
@@ -1061,7 +1028,7 @@ def left_cells_in(c,n):
  			   [13212, 213212, 1213212, 21213212, 321213212],
  			   [132123, 2132123, 12132123, 212132123, 3212132123]]
     """
-    remain = c
+    remain = C
     l = []
     while remain != []:
         w = remain[0]
@@ -1069,3 +1036,30 @@ def left_cells_in(c,n):
         remain = [i for i in remain if i not in lcell]
         l = l + [lcell]
     return l
+
+""" distinguished involutions """
+
+def dist_inv(l):
+    """
+    Find the distinguished involution in the intersection l of a left cell and
+    its intersection.
+
+    EXAMPLE:
+        sage: dist_inv(13,4)
+        sage: {13}
+        
+        sage: dist_inv(1213,4)
+        sage: {13}
+
+        sage: dist_inv(13,5)
+        sage: {13}
+    """ 
+    S = Set(x_times_y(inverse(l[0]),l[0]).keys())
+    # i = 1
+    # while len(S) > 1:
+        # SS = Set(x_times_y(inverse(l[i]),l[i]).keys())
+        # S = S.intersection(SS)
+        # i = i+1
+    return list(S)[0]
+
+
