@@ -425,7 +425,7 @@ def ffactors(y):
             elif seg == (1,2,1):
                 factors = factors + [B]
             elif seg == (2,1,2):
-                if i < len(l) - 3 and l[i+2][0] == 1:
+                if i < len(l) - 2 and l[i+2][0] == 1:
                     factors = factors + [E]
                 else:
                     factors = factors + [C]
@@ -1002,17 +1002,16 @@ def a2_cells(n):
         f.write("************** H" + str(n) + " *****************\n\n")
         f.write("The 2-sided cell of a-value 2 in H" + str(n) + " has " +
                 str(l) + " elements.\n\n")
-        f.write("The cell consists of " + str(k) + " left cells. They are:\n\n"
-)
+        f.write("The cell consists of " + str(k) + " left cells. For each cell,\nwe list its elements, its intersection with its inverse,\nand its unique distinguished involution below. \n\n")
         for i in range(k):
-            f.write("L" + str(i) + ":")
+            f.write("Cell " + str(i+1) + ": ")
             f.write("%s" % lcells[i])
             f.write(".\n")
-            f.write("Its intersection with its inverse is ")
+            f.write("The intersection: ")
             f.write("%s" % intersections[i])
-            f.write(".\n\n")
-            f.write("The distinguished involution in this left cell is ")
-            print dist_inv(list(intersections[i]))
+            f.write(".\n")
+            f.write("The distinguished involution: ")
+            f.write("%s" % dist_inv(list(intersections[i])))
             f.write(".\n\n")
 
 
