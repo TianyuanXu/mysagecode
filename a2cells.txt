@@ -46,52 +46,6 @@ The cell consists of 5 left cells. For each cell, we list its elements, its inte
 
 L1:[13, 213, 1213, 21213, 321213].
 The intersection: {13}.
-The distinguished involution: 13.
-
-L2:[132, 2132, 12132, 212132, 3212132].
-The intersection: {2132}.
-The distinguished involution: 2132.
-
-L3:[1321, 21321, 121321, 2121321, 32121321].
-The intersection: {121321}.
-The distinguished involution: 121321.
-
-L4:[13212, 213212, 1213212, 21213212, 321213212].
-The intersection: {21213212}.
-The distinguished involution: 21213212.
-
-L5:[132123, 2132123, 12132123, 212132123, 3212132123].
-The intersection: {3212132123}.
-The distinguished involution: 3212132123.
-
-************** H3 *****************
-
-The 2-sided cell of a-value 2 in H3 has 25 elements.
-
-The cell consists of 5 left cells. For each cell,
- we list its elements, its intersection with its inverse,
- and its unique distinguished involution below. 
-
-Cell 1: [13, 213, 1213, 21213, 321213].
-The intersection: {13}.
-The distinguished involution: 13.
-
-Cell 2: [132, 2132, 12132, 212132, 3212132].
-The intersection: {2132}.
-The distinguished involution: 2132.
-
-Cell 3: [1321, 21321, 121321, 2121321, 32121321].
-The intersection: {121321}.
-The distinguished involution: 121321.
-
-Cell 4: [13212, 213212, 1213212, 21213212, 321213212].
-The intersection: {21213212}.
-The distinguished involution: 21213212.
-
-Cell 5: [132123, 2132123, 12132123, 212132123, 3212132123].
-The intersection: {3212132123}.
-The distinguished involution: 3212132123.
-
 ************** H3 *****************
 
 The 2-sided cell of a-value 2 in H3 has 25 elements.
