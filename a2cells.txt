@@ -2,54 +2,6 @@
 
 The 2-sided cell of a-value 2 in H3 has 25 elements.
 
-The cell consists of 5 left cells. They are:
-
-L0:[13, 213, 1213, 21213, 321213].
-Its intersection with its inverse is {13}.
-
-The distinguished involution in this left cell is ************** H3 *****************
-
-The 2-sided cell of a-value 2 in H3 has 25 elements.
-
-The cell consists of 5 left cells. They are:
-
-L0:[13, 213, 1213, 21213, 321213].
-Its intersection with its inverse is {13}.
-
-The distinguished involution in this left cell is 13.
-
-L1:[132, 2132, 12132, 212132, 3212132].
-Its intersection with its inverse is {2132}.
-
-The distinguished involution in this left cell is 2132.
-
-L2:[1321, 21321, 121321, 2121321, 32121321].
-Its intersection with its inverse is {121321}.
-
-The distinguished involution in this left cell is 121321.
-
-L3:[13212, 213212, 1213212, 21213212, 321213212].
-Its intersection with its inverse is {21213212}.
-
-The distinguished involution in this left cell is 21213212.
-
-L4:[132123, 2132123, 12132123, 212132123, 3212132123].
-Its intersection with its inverse is {3212132123}.
-
-The distinguished involution in this left cell is 3212132123.
-
-************** H3 *****************
-
-The 2-sided cell of a-value 2 in H3 has 25 elements.
-
-The cell consists of 5 left cells. For each cell, we list its elements, its intersection with its inverse, and its unique distinguished involution below. 
-
-L1:[13, 213, 1213, 21213, 321213].
-The intersection: {13}.
-************** H3 *****************
-
-The 2-sided cell of a-value 2 in H3 has 25 elements.
-
 The cell consists of 5 left cells. For each cell,
 we list its elements, its intersection with its inverse,
 and its unique distinguished involution below. 
