@@ -1054,11 +1054,11 @@ def dist_inv(l):
         sage: {13}
     """ 
     S = Set(x_times_y(inverse(l[0]),l[0]).keys())
-    # i = 1
-    # while len(S) > 1:
-        # SS = Set(x_times_y(inverse(l[i]),l[i]).keys())
-        # S = S.intersection(SS)
-        # i = i+1
+    i = 1
+    while len(S) > 1:
+        SS = Set(x_times_y(inverse(l[i]),l[i]).keys())
+        S = S.intersection(SS)
+        i = i+1
     return list(S)[0]
 
 
